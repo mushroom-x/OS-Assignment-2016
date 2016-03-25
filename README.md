@@ -5,3 +5,4 @@ Group Name : JDQ_LeiNiuKeSi
 
 @Author XSK
 
+Hi. Remember,we are a team and you are my parterner.
