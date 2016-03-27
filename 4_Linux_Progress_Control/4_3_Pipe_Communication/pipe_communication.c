@@ -3,21 +3,26 @@
 #include <stdlib.h>
 #include <stdlib.h>
 #include <unistd.h>
+#include <string.h>
+
+#include <sys/types.h>
+#include <sys/wait.h>
 
 #define MAXSIZE 100
 #define READ_NUM 50
 #define WRITE_NUM 70
 
-char * makeString(int len)
+void InitStr(char * text,int len)
 {
 	int i;
-	char text[MAXSIZE];
+	char str[MAXSIZE];
 
-	for(i = 0; i<len-1; i++){
-		strcat(text,"*");
+	for(i = 0; i<len; i++){
+		strcat(str,"*");
 	}
-	strcat(text,"\0");
-	return text;
+
+	strcpy(text,"\0");
+	strcat(text,str);
 }
 
 void PipeWrite(int fd[2],int len)
@@ -27,7 +32,7 @@ void PipeWrite(int fd[2],int len)
 
 	if(len <  MAXSIZE)	//safety check
 	{
-		strcpy(text,getStringFlow);
+		InitStr(text,WRITE_NUM);
 	}
 	else
 	{
@@ -53,7 +58,7 @@ void PipeRead(int fd[2],int len)
 	printf("Read Process : Read %d characters\n", nRead);
 }
 
-void WriteProcess(int fd[2])
+void WriteProcess(int  fd[2])
 {
 
 	PipeWrite(fd,WRITE_NUM);
@@ -64,8 +69,6 @@ void WriteProcess(int fd[2])
 
 	PipeWrite(fd,WRITE_NUM);
 	printf("Write Process : Done\n");
-
-	return;
 }
 
 void ReadProcess(int fd[2])
@@ -78,8 +81,6 @@ void ReadProcess(int fd[2])
 
 	printf("Read Process :  Time 3\n");
 	PipeRead(fd,READ_NUM + 20);
-
-	return;
 }
 
 
@@ -102,7 +103,7 @@ int main()
 				
 	if(pid == 0)		//child interprocess 1  ==> Write
 	{
-		WriteProcess(int fd[2]);
+		WriteProcess(fd);
 	}
 	else			//father interprocess 
 	{
