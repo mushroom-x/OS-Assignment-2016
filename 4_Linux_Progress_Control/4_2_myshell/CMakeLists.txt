@@ -1,10 +1,10 @@
 cmake_minimum_required(VERSION 3.5)
-project(shared_memory)
+project(myshell)
 
 set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11")
 
-set(SOURCE_FILE lib/common/common.c lib/common/common.h)
-set(SOURCE_FILE main.cpp init.c sender.c receiver.c test.h)
+set(SOURCE_FILE main.cpp)
+set(SOURCE_FILE  myshell.c myshell cmd1.c cmd1 cmd2.c cmd2 cmd3.c cmd3)
 
-add_executable(shared_memory ${SOURCE_FILES} main.cpp init1.c test.h)
+add_executable(myshell ${SOURCE_FILES} main.cpp cmd1.c cmd1 cmd2.c cmd2 cmd3.c cmd3 )
 

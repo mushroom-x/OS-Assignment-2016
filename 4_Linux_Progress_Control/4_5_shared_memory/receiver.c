@@ -43,17 +43,11 @@ int main(int argc, char const *argv[])
 
 	Init();
 	
-	//scanf("%s",result);
-	
 	GetMessage();
 
 	printf("Receiver : %s \n",result);
 
-	
-	/*
-	* Before quit
-	*/
-	printf("TODO:   remove shared memory ....\n");				//unlink shared memory
+	//TODO:   remove shared memory ... //unlink shared memory				
 	rm_sem(semid,SEM_NUM);	 //remove semaphore
 	
 	printf("Receiver :  Process End \n");

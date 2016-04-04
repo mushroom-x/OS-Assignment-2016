@@ -1,39 +1,48 @@
 #include "lib/common/common.h"
 
-int main(int argc, char const *argv[])
+
+//key
+key_t key;
+
+//shared memory
+int shmid;
+char * shmptr;
+char input[SHM_SIZE];
+
+int semid;							//semaphore
+
+
+void Init()
 {
-	//key
-	key_t key;
-	
-	//shared memory
-	int shmid;
-	char * shmptr;
-	char input[SHM_SIZE];
+	key = get_key();					//init key
+	shmid  = get_shmid(key);			// init shared memory
+	shmptr = shmat(shmid,NULL,0);		// attach segement to vitural ...?
+	// TODO initialize the shared memory : ?
+	semid = get_semid(key,SEM_NUM);		//init semaphore ([MUTEX,FULL])
+}
 
-	//semaphore
-	int semid;
+void SaveMessage()
+{
 
-	//init key
-	key = get_key();
-	// init shared memory
-	shmid  = get_shmid(key);
-	// attach segement to vitural ...?
-	shmptr = shmat(shmid,NULL,0);
-	memset(shmptr,0,SHM_SIZE);
-	//init semaphore ([MUTEX,FULL])
-	semid = get_semid(key,SEM_NUM);
-
-
-	//input message from shell 
-	scanf("%s",input);
-
-	//save  message into SHM
-	P(semid,MUTEX);
+	P(semid,MUTEX);						
 	strcpy(shmptr,input);
 	V(semid,MUTEX);
 
 	V(semid,FULL);
+}
 
+int main(int argc, char const *argv[])
+{
+	
+	
+	Init();
+	
+	/*waiting for user to input message*/
+	scanf("%s",input);					//input message from shell 
+										// TODO input a whole line
+
+	SaveMessage();
+	
 	printf("Sender:  Process End\n");
 	return 0;
 }
