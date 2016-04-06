@@ -1,4 +1,4 @@
-#include "lib/common/common.h"
+#include "common.h"
 
 
 //key
@@ -9,47 +9,41 @@ int shmid;
 char * shmptr;
 char result[SHM_SIZE];
 
-//semaphore
-int semid;
-	
-/*
-* INIT 
-*/	
+//semaphore 
+sem_t * full;
+sem_t * mutex;
+							//semaphore
+
+
 void Init()
 {
-	key = get_key();				//init key
-	shmid  = get_shmid(key);		// init shared memory
-	shmptr = shmat(shmid,NULL,0);	// attach segement to vitural ...?
-	semid = get_semid(key,SEM_NUM);	//init semaphore ([MUTEX,FULL])
-
+	key = KEY_NUM;					//init key
+	shmid  = GetShmId(key);			// init shared memory
+	shmptr = shmat(shmid,NULL,0);		// attach segement to vitural ...?
+	//semaphore init
+	full = sem_open(FULL_NAME,O_CREAT);
+	mutex = sem_open(MUTEX_NAME,O_CREAT);
 }
 
-/*
-* Save Message in shared memory
-*/
-void GetMessage()
+void ReadMessage()
 {
-	P(semid,FULL);
-	//save  message into SHM
-	P(semid,MUTEX);
+	P(full);
+	P(mutex);						
 	strcpy(result,shmptr);
-	V(semid,MUTEX);
+	V(mutex);
 }
-
 
 int main(int argc, char const *argv[])
 {
-
-
+	
+	
 	Init();
 	
-	GetMessage();
-
-	printf("Receiver : %s \n",result);
-
-	//TODO:   remove shared memory ... //unlink shared memory				
-	rm_sem(semid,SEM_NUM);	 //remove semaphore
+	/*waiting for user to input message*/
+	ReadMessage();
 	
+	printf("Receiver : message is %s\n",result);
+	SemDestroy();
 	printf("Receiver :  Process End \n");
 	return 0;
 }

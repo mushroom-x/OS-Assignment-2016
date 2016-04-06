@@ -1,4 +1,4 @@
-#include "lib/common/common.h"
+#include "common.h"
 
 
 //key
@@ -9,26 +9,30 @@ int shmid;
 char * shmptr;
 char input[SHM_SIZE];
 
-int semid;							//semaphore
+//semaphore 
+sem_t * full;
+sem_t * mutex;
+							//semaphore
 
 
 void Init()
 {
-	key = get_key();					//init key
-	shmid  = get_shmid(key);			// init shared memory
+	key = KEY_NUM;					//init key
+	shmid  = GetShmId(key);			// init shared memory
 	shmptr = shmat(shmid,NULL,0);		// attach segement to vitural ...?
-	// TODO initialize the shared memory : ?
-	semid = get_semid(key,SEM_NUM);		//init semaphore ([MUTEX,FULL])
+	//semaphore init
+	full = sem_open(FULL_NAME,O_CREAT);
+	mutex = sem_open(MUTEX_NAME,O_CREAT);
 }
 
 void SaveMessage()
 {
 
-	P(semid,MUTEX);						
+	P(mutex);						
 	strcpy(shmptr,input);
-	V(semid,MUTEX);
+	V(mutex);
 
-	V(semid,FULL);
+	V(full);
 }
 
 int main(int argc, char const *argv[])
@@ -40,7 +44,6 @@ int main(int argc, char const *argv[])
 	/*waiting for user to input message*/
 	scanf("%s",input);					//input message from shell 
 										// TODO input a whole line
-
 	SaveMessage();
 	
 	printf("Sender:  Process End\n");
