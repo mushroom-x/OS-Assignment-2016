@@ -1,4 +1,4 @@
-#include "msg_test.h"
+#include "common.h"
 
 int main()
 {
