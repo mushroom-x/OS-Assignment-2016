@@ -1,13 +1,26 @@
-Work Flow 
+> step 1
+```
+make
+```
 
-COMPILE
+> step 2
 
-1.make  [There is a bug,I don't know  how to add -pthread to "gcc -o ..." in makefile]
-2.
-[if the bug is fixed then those arguments  could be cancel]
-gcc -pthread -o init init.o common.o
-gcc -pthread -o sender sender.o common.o
-gcc -pthread -o receiver receiver.o common.o
+Initialization Semaphpre and Message Queue
 
+```
+./init
+```
 
-3.make clean
+Send message : input the message you want to send 
+```
+./sender
+```
+
+Recevier message 
+```
+./recevier
+```
+
+makefile的使用
+
+[makefile 同时生成多个可执行文件](http://www.jianshu.com/p/f1d95969e7df)
