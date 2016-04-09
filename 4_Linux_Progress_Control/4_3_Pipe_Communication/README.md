@@ -16,6 +16,7 @@ make
 
 >output
 
+```
 Write Process : Wanna input 70 characters 
 Write Process : Wrote in 70 characters ... 
 Write Process: Sleep - 10 Seconds ... 
@@ -33,3 +34,4 @@ Write Process : Wrote in 70 characters ...
 Read Process : Read 70 characters 
 Write Process : Done 
 -------------End of Program-----------
+```
