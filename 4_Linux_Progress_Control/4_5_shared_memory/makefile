@@ -1,20 +1,27 @@
-objects = init.o common.o sender.o
+all : init sender receiver
+.PHONY : clean
 
-edit : $(objects)
-	cc -o edit $(objects)
 
-common.o : common.c
+init : init.o common.o
+	cc -pthread -o init init.o common.o
 
-init.o : common.h
+sender : sender.o common.o
+	cc -pthread -o sender sender.o common.o
+
+receiver : receiver.o common.o
+	cc -pthread -o receiver receiver.o common.o
+
+
+init.o : common.h           
 
 sender.o : common.h
 
 receiver.o : common.h
 
-#init : init.o common.o
-#	cc -pthread -o init init.o common.o
-
-.PHONY : clean
-
 clean : 
-	rm edit $(objects)
+	rm	init 
+	rm	receiver
+	rm	sender 
+	rm	*.o
+
+
