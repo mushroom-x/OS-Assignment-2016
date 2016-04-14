@@ -1,13 +1,11 @@
-all : recevier sender
+message_queue : message_queue.o
+	cc -pthread -o message_queue message_queue.o
+
 .PHONY : clean
 
-recevier.o : common.h
-sender.o : common.h
 
-clean :
+clean:
+	rm message_queue
 	rm *.o
-	rm recevier
-	rm sender
-
 
 
