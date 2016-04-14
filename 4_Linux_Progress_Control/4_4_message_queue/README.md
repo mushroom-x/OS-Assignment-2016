@@ -11,18 +11,5 @@
 
 >使用说明
 
-Compile
-
-```
-make
-```
-
-发送进程
-```
-./sender
-```
-
-接收进程
-```
-./receiver
-```
+gif动画演示 
+[4_4 message queue 例程演示](http://www.jianshu.com/p/b4a6699ede6a)
