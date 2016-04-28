@@ -1,6 +1,7 @@
 /**
- * Thread 1 : Print a
- * Thread 2 : Print b
+ * Task2: Mutex Operation 
+ * Thread 1 : Add to Sum +1
+ * Thread 2 : Add to Sum +2
  */
 
 #include <stdio.h>
