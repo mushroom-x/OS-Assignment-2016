@@ -27,14 +27,20 @@
 (4) T4_R_S    : Sender & Receiver
 
 
-##T1_AB
+##运行
+###T1_AB
+
+![Dos-T1-02.gif](http://upload-images.jianshu.io/upload_images/1199728-c6347ab382fa76ce.gif?imageMogr2/auto-orient/strip)
+
+###T2_Mutex 
 
 
-##T2_Mutex 
+![T2_Mutex.gif](http://upload-images.jianshu.io/upload_images/1199728-423e3369f4da30b0.gif?imageMogr2/auto-orient/strip)
 
+###T3_P_C
 
-##T3_P_C
+![T3_Producer_Consumer.gif](http://upload-images.jianshu.io/upload_images/1199728-cdb74016a9302bb2.gif?imageMogr2/auto-orient/strip)
 
+###T4_R_S
 
-
-##T4_R_S
+![T4_Sender_Receiver.gif](http://upload-images.jianshu.io/upload_images/1199728-d38132734fbddee1.gif?imageMogr2/auto-orient/strip)
