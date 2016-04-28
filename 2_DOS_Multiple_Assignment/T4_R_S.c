@@ -1,6 +1,7 @@
 /**
- * Thread 1 : Producer 1-50  i^2 -> numBuf
- * Thread 2 : Consumer read from numBuf
+ * Task 4: Use Buffer to Communication
+ * Thread 1 : Sender 
+ * Thread 2 : Receiver
  */
 
 #include <stdio.h>
