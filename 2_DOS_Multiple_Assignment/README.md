@@ -28,6 +28,10 @@
 
 
 ##运行
+
+>github上查看gif可能会有一些卡，所以我也放到了我的简书博客上面 
+[DOS 系列程序运行例程](http://www.jianshu.com/p/78e2542a9901)
+
 ###T1_AB
 
 ![Dos-T1-02.gif](http://upload-images.jianshu.io/upload_images/1199728-c6347ab382fa76ce.gif?imageMogr2/auto-orient/strip)
