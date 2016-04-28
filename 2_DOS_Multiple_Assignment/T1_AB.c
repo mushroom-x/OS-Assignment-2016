@@ -542,7 +542,7 @@ int ThreadNext()
     int id;
     int i;
 
-    TcbState();
+    /*TcbState();*/
     for(i = 1;i <= MAX_TCB_NUM;i++)
     {
 
