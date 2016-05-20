@@ -8,6 +8,8 @@
 #include "time.h"
 using namespace std;
 
+
+
 ///***** 定义变量 *****/
 #define BLOCKSIZE       1024        // 磁盘块大小
 #define SIZE            1024000     // 虚拟磁盘空间大小
@@ -50,7 +52,7 @@ typedef struct USEROPEN {
 
     int dirno;                  // 相应打开文件的目录项在父目录文件中的盘块号
     int diroff;                 // 相应打开文件的目录项在父目录文件的dirno盘块中的目录项序号
-    char dir[80];  // 相应打开文件所在的目录名，这样方便快速检查出指定文件是否已经打开
+    char dir[80];               // 相应打开文件所在的目录名，这样方便快速检查出指定文件是否已经打开
     int count;                  // 读写指针在文件中的位置
     char fcbstate;              // 是否修改了文件的FCB的内容，如果修改了置为1，否则为0
     char topenfile;             // 表示该用户打开表项是否为空，若值为0，表示为空，否则表示已被某打开文件占据
@@ -80,14 +82,14 @@ void my_mkdir(char *dirname);      // 创建子目录
 void my_rmdir(char *dirname);      // 删除子目录
 void my_ls();                      // 显示目录中的内容
 void my_cd(char *dirname);         // 用于更改当前目录
-int my_create(char *filename);    // 创建文件
+int  my_create(char *filename);    // 创建文件
 void my_rm(char *filename);        // 删除文件
-int my_open(char *filename);      // 打开文件
-int my_close(int fd);             // 关闭文件
-int my_write(int fd);             // 写文件
-int my_read(int fd);     // 读文件
-int do_write(int fd, char *text, int len, char wstyle);
-int do_read(int fd, int len, char *text);
+int  my_open(char *filename);      // 打开文件
+int  my_close(int fd);             // 关闭文件
+int  my_write(int fd);             // 写文件
+int  my_read(int fd);     // 读文件
+int  do_write(int fd, char *text, int len, char wstyle);
+int  do_read(int fd, int len, char *text);
 
 
 
@@ -356,6 +358,7 @@ int getFreeOpenfilelist(){
     return -1;
 }
 
+// FAT---
 unsigned short int getFreeBLOCK(){
     fat* fat1 = (fat*)(myvhard + BLOCKSIZE);
     for(int i=0; i < (int)(SIZE/BLOCKSIZE); i++){
@@ -366,6 +369,7 @@ unsigned short int getFreeBLOCK(){
     return END;
 }
 
+// ->OFT
 int find_father_dir(int fd){
     for(int i=0; i<MAXOPENFILE; i++){
         if(openfilelist[i].first == openfilelist[fd].dirno){
@@ -375,6 +379,7 @@ int find_father_dir(int fd){
     return -1;
 }
 
+//##
 void my_format(){
     //① 将虚拟磁盘第一个块作为引导块，开始的8个字节是文件系统的魔数，记为“10101010”；在之后写入文件系统的描述信息，如FAT表大小及位置、根目录大小及位置、盘块大小、盘块数量、数据区开始位置等信息；
     //	② 在引导块后建立两张完全一样的FAT表，用于记录文件所占据的磁盘块及管理虚拟磁盘块的分配，每个FAT占据两个磁盘块；对于每个FAT中，前面5个块设置为已分配，后面995个块设置为空闲；
@@ -419,8 +424,7 @@ void my_format(){
     //这里考虑32位编译器, 所以完整的表示一个时间的秒数是不够长的,所以,保存秒数的一半
     //这样小时占5位,分钟占6位,秒占5位
     root->time = time->tm_hour * 2048 + time->tm_min*32 + time->tm_sec/2;
-    //年份我们保存的是实际值-2000, time->tm_mon要+1是因为,这个结构设计的时候0代表1月
-    //同理,年份占7位,月份占4位,日期占5位
+   
     root->date = (time->tm_year-100)*512 + (time->tm_mon+1)*32 + (time->tm_mday);
     root->first = 5;
     root->free = 1;
@@ -490,7 +494,9 @@ void startSys(){
     openfilelist[0].first = root->first;
     openfilelist[0].length = root->length;
     openfilelist[0].free = root->free;
-    openfilelist[0].dirno = 5;
+
+
+    openfilelist[0].dirno = 5;\\
     openfilelist[0].diroff = 0;
     strcpy(openfilelist[0].dir, "\\root\\");
     openfilelist[0].count = 0;
