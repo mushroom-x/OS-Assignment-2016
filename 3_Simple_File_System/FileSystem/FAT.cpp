@@ -1,70 +1,47 @@
 #include "FAT.h"
 
-FAT * initFAT1AndFAT2(unsigned char *VHDPtr){
-	FAT fat1 = getFAT1(VHDPtr);
-	FAT fat2 = getFAT2(VHDPtr);
-
-	initFAT(fat1);
-	// ROOT DIRECTORY
-	fat1[BOLCK_INDEX_ROOT_DIR].id = VHD_BLOCK_FILE_END;
-
-	synchronizeFAT2(VHDPtr);
-}
 
 FAT * initFAT(FAT *fat){
 	int i;
-
-	/*TODO 5? 1000?*/
-	for(int i=0;i<5;i++){
+	
+	/**
+	 * 下列盘块对应的FAT表中的值设置为 文件结束标志
+	 * |Start| End |	Name	|	Note			|
+	 * |-----|-----|------------|-------------------|
+	 * |  0  |  0  | Boot Block | 引导区			|
+	 * |-----|-----|------------|-------------------|
+	 * |  1  |  2  | 	FAT1	| 文件分配表 		|
+	 * |-----|-----|------------|-------------------|
+	 * |  3  |  4  | 	FAT2	| 文件分配表-备份 	|
+	 * |-----|-----|------------|-------------------|
+	 * |  5  |  6  |  ROOT DIR	| 根目录区			|
+	 * |-----|-----|------------|-------------------|
+	 */
+	for(int i = BLOCK_INDEX_BOOT_BLOCK;i < BLOCK_INDEX_DATA_AREA; i++){
 		fat[i].id = VHD_BLOCK_FILE_END;
 	}
 
-	for(int i=5;i<1000;i++){
-		/* TODO  ? Why*/
+	/**
+	 * 下列盘块对应的FAT表中的值设置为 FREE
+	 * |-----|-----|------------|-------------------|
+ 	 * |  7  |1000 | DATA Area	| 数据区			|
+	 */
+	for(int i = BLOCK_INDEX_DATA_AREA;i < VHD_BLOCK_NUM; i++){
+
 		fat[i].id = VHD_BLOCK_FREE;
 	}
 
 	return fat;
 }
 
+/**
+ * 根据盘块号获取在FAT1表中的指针
+ * @param  VHDPtr  [description]
+ * @param  blockNo [description]
+ * @return         [description]
+ */
+FAT* getFatPtrByBlockNo(unsigned char *VHDPtr, int blockNo){
 
-FAT * getFAT1(unsigned char *VHDPtr){
-	FAT * FAT1 = (FAT*)(VHDPtr + VHD_BLOCK_SIZE * BLOCK_INDEX_FAT1);
-	return FAT1;
-}
-
-
-FAT * getFAT2(unsigned char *VHDPtr){
-	FAT * FAT2 = (FAT*)(VHDPtr + VHD_BLOCK_SIZE * BLOCK_INDEX_FAT2);
-	return FAT2;
-}
-
-void synchronizeFAT2(unsigned char *VHDPtr){
-	FAT1 * fat1 = getFAT1(VHDPtr);
-	FAT * fat2 = getFAT2(VHDPtr);
-	memcpy(fat2,fat1,VHD_BLOCK_SIZE);
-}
-
-
-unsigned short int getFreeVHDBlock(FAT * FATPtr){
-
-	int i;
-	int blockNum = (int)(VHD_SIZE/VHD_BLOCK_SIZE)
-	
-	for(i = 0; i < blockNum; i++){
-		if(FATPtr[i].id == VHD_BLOCK_FREE){
-			return i;
-		}
-	}
-
-	return VHD_BLOCK_FILE_END;
-}
-
-FAT* getFATPtrByBlockNo(unsigned char *VHDPtr, int blockNo){
-
-	return getFAT1(VHDPtr) + blockNo;
-}
-
-unsigned char * getBlockPtrByBlockNo(unsigned char *VHDPtr, int blockNo){
-	return VHDPtr + blockNo * VHD_BLOCK_SIZE;
+	unsigned char * fat1Ptr = getBlockPtrByBlockNo(VHDPtr,BLOCK_INDEX_FAT1);
+	return  fat1Ptr + blockNo;
 }

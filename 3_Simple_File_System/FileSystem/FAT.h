@@ -1,6 +1,12 @@
 #ifndef _FAT_H_
 #define _FAT_H_
 
+/**
+ * [文件说明]
+ * FAT : File Allocation Table
+ * 文件分配表
+ * 
+ */
 
 #include "Common.h"
 /**
@@ -13,10 +19,6 @@ typedef struct FAT
 
 
 
-FAT * getFAT1(unsigned char *VHDPtr);
 
-FAT * getFAT2(unsigned char *VHDPtr);
-
-unsigned short int getFreeVHDBlock(FAT * FATPtr);
 
 #endif

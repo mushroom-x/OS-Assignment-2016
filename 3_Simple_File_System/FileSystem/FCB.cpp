@@ -8,59 +8,31 @@
   * 同理,年份占7位,月份占4位,日期占5位
   */
 
-void setFCBTime(FCB *fcb){
+void setFcbTime(FCB *fcb){
 	time_t rawTIme = time(NULL);
     struct tm *time = localtime(&rawTime);
 
     unsigned short currentTime = time->tm_hour * 2048 + time->tm_min*32 + time->tm_sec/2;
-    unsigned short currentDate = (time->tm_year-100)*512 + (time->tm_mon+1)*32 + (time->tm_mday);
+    unsigned short currentDate = (time->tm_year-2000)*512 + (time->tm_mon+1)*32 + (time->tm_mday);
     
     fcb->createTime = currentTime;
     fcb->currentDate = currentDate;
 }
 
+/**
+ * 初始化FCB
+ * @param fcbPtr [description]
+ */
+void initFcb(FCB *fcbPtr){
 
-void initFCB(FCB *fcb){
-
-	//strcpy(fcb->fileName,fileName);
-	//strcpy(fcb->fileNameExten,fileNameExten);
-   	setFCBTime(fcb);
-    //fcb->isDirEntryFree = TRUE;/*TODO True or False?*/
+	memset(fcbPtr,0,sizeof(FCB));
+   	
+   	//setFCBTime(fcbPtr);
+   	strcpy(fcbPtr->fileName,"");
+    fcbPtr->isUse = FALSE;
 }
 
 
-FCB * getRootDir(unsigned char *VHDPtr){
-	FCB * root = (FCB *)(VHDPtr + VHD_BLOCK_SIZE*BOLCK_INDEX_ROOT_DIR)
-
-	return root;
-}
 
 
-FCB * initFCBRootDir(unsigned char *VHDPtr){
-	FCB * rootDir = getRootDir(VHDPtr);
 
-	int fcbNum = int(VHD_BLOCK_SIZE/sizeof(FCB));
-	
-	//Part1:  .
-	FCB * fcbThis = rootDir;
-	initFCB(fcbThis);
-	strcpy(fcbThis->fileName,".");
-	strcpy(fcbThis->fileNameExten,"dir");
-	fcbThis->metadata = MD_DIR_FILE;/* TODO metadata type meaning*/
-	fcbThis->length = 2 * sizeof(FCB);//TODO
-	fcbThis->isDirEntryFree = FALSE; 
-
-	//Part2: .. (ROOT's Parent is Root self)
-	FCB * fcbParent = fcbThis + 1;
-	memcpy(fcbParent,fcbThis,sizeof(FCB));
-	strcpy(fcbParent->fileName,"..");
-
-	//ELSE
-	fcbPtr = fcbParent;
-	for(int i = 2;i<fcbNum;i++){
-		fcbPtr++;
-		strcpy(fcbPtr->fileName,"");
-		fcbPtr->isDirEntryFree = TRUE;
-	}
-
-}
