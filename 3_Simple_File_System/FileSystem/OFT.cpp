@@ -1,7 +1,6 @@
 #include "OFT.h"
 
 
-
 OFT * openFile(OFT * OftList,FCB *fcbPtr){
 
 	int iOft = getNextOft(OftList);
@@ -15,9 +14,7 @@ OFT * openFile(OFT * OftList,FCB *fcbPtr){
 
 	oftPtr = OftList + iOft;
 
-	initOftWithFcb(OFT * OftList,iOft,FCB *fcbPtr);
-
-
+	initOftWithFcb(OftList,iOft,fcbPtr);
 }
 
 
@@ -25,14 +22,15 @@ OFT * openFile(OFT * OftList,FCB *fcbPtr){
 OFT * initOftWithFcb(OFT * OftList,int iOft,FCB *fcbPtr){
 
 	OFT * oftPtr = OftList + iOft;
-	int pdfOftIndex; 					// parent directory file in openfile list 
+	int pdfOftIndex; 					// parent directory file in openfile list
 	// 1.Init
 	initOft(oftPtr);
 	loadFcb2Oft(oftPtr,fcbPtr);
-	
+
+
 	/*
 	// 2.Apply for a free OFT in OftList
-	
+
 	pdfOftIndex = findPdfOft(OftList,iOft);
 	if(pdfOftIndex == OBJECT_NOT_FOUND){
 		cout << "Error: OFT could not find parent directory in OftList" <<endl;
@@ -74,7 +72,10 @@ void loadFcb2Oft(OFT *oftPtr,FCB *fcbPtr){
 	memcpy(&(oftPtr->fcb),fcbPtr,sizeof(FCB));
 }
 
-
+/* 加载 Oft中的信息到Fcb中来 */
+void loadOft2Fcb(OFT *oftPtr,FCB *fcbPtr){
+    memcpy(fcbPtr,&(oftPtr->fcb),sizeof(FCB));
+}
 
 /**
  * 获取OFTList中空闲的OFT
@@ -82,8 +83,7 @@ void loadFcb2Oft(OFT *oftPtr,FCB *fcbPtr){
  * @param  OFTNum  [description]
  * @return         [description]
  */
-int getNextOft(OFT * OftList)
-{
+int getNextOft(OFT * OftList){
 	int i;
 
 	for(i = 0; i < OFT_NUM; i++){
@@ -96,23 +96,3 @@ int getNextOft(OFT * OftList)
 	return OBJECT_NOT_FOUND;
 }
 
-
- /**
-  * Find Parent Directory File Open File‘s index in OFTList
-  * @note
-  * 	寻找当前打开文件的父目录文件的OFT在OftList中的序号
-  * @param  OftList [description]
-  * @param  oftNum  [description]
-  * @param  iOft    [description]
-  * @return         [description]
-  */
-int findPdfOft(OFT *OftList,iOft){
-
-	int i;
-	for(i = 0; i < OFT_NUM; i++){
-		if(OFTList[i].fcb.blockNo == OFTList[iOft].fdt.pdfBlockNo){
-			return i;
-		}
-	}
-	return OBJECT_NOT_FOUND；
-}

@@ -5,10 +5,11 @@
  * [文件说明]
  * FAT : File Allocation Table
  * 文件分配表
- * 
+ *
  */
 
 #include "Common.h"
+
 /**
 * FAT : File Allocation Table
 */
@@ -17,7 +18,7 @@ typedef struct FAT
 	unsigned short id;
 } FAT;
 
-
+void deleteFileAtFat(unsigned char *VhdPtr,int blockNo);
 
 
 

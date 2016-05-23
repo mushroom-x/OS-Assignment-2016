@@ -233,6 +233,8 @@ int do_write(int fd, char *text, int len, char wstyle){
         cout << "申请内存空间失败!";
         return -1;
     }
+
+    
     fcb *dBlock = (fcb *)(myvhard + BLOCKSIZE * blockNum);
     fcb *dFcb = (fcb *)(text);
     unsigned char *blockPtr = (unsigned char *)(myvhard + BLOCKSIZE * blockNum);					//盘块指针
