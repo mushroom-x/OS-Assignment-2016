@@ -122,5 +122,8 @@ int fileNameMatch(FCB * fcbPtr,char *fname,char *ename);
 void printDirFile(FCB *fcbPtr);
 void printDataFile(FCB *fcbPtr);
 
+int initDirectoryFile(unsigned char *VhdPtr,int blockNo,int parentBlockNo);
+int initDataFileFcb(FCB *fcbPtr,char * fileName,int blockNo);
+int getNextFcb(FCB *fcbPtr);
 
 #endif

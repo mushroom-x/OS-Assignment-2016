@@ -37,8 +37,10 @@ typedef struct OFT
 OFT * addFcb2OftList(OFT * OftList,FCB *fcbPtr);
 OFT * initOftWithFcb(OFT * OftList,int iOft,FCB *fcbPtr);
 OFT * initOft(OFT * oftPtr);
+//int initOft(OFT *OftList,int piOft,char * filename);
 void loadFcb2Oft(OFT *oftPtr,FCB *fcbPtr);
 void loadOft2Fcb(OFT *oftPtr,FCB *fcbPtr);
 int getNextOft(OFT * OftList);
+//int getIndexOfFcb(OFT *oftPtr,char * fname,char *ename,unsigned char ftype);
 
 #endif

@@ -347,8 +347,9 @@ int my_rmdir(char *dirname){
 }
 
 
-int my_create(char *filename){
+int my_create(char *filename,unsigned char metadata){
 
+/*
     int i;
     char buffer[FILE_BUF_SIZE];
 
@@ -413,7 +414,45 @@ int my_create(char *filename){
     do_write(oftPtr,(char *)fcbPtr,sizeof(FCB),WS_OVERWRITE);
 
     oftPtr->fdt.isUpate = TRUE;
+
+*/
+
+
+    FAT * fat1 = (FAT *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_FAT1);
+    OFT *pOftPtr = OftList + currOftIndex;
+
+    // Apply Available FCB  In Parent Directory File
+    FCB * fcbPtr =(FCB *)getBlockPtrByBlockNo(VhdPtr,pOftPtr->fcb.blockNo);
+    int offset = getNextFcb(fcbPtr);
+    if(offset == OBJECT_NOT_FOUND){
+        cout << "Error: No Available Directory Entry" << endl;
+        return FAILURE;
+    }
+
+     // Apply for Disk Block
+    int blockNo = getNextVhdBlock(fat1);
+    if(blockNo == OBJECT_NOT_FOUND){
+        cout << "Error : No Available Block" << endl;
+        return FAILURE;
+    }
+
+    // Update Fat Table
+    fat1[blockNo].id = VHD_BLOCK_FILE_END;
+    initFAT2(VhdPtr);
+    // Init Fcb
+    initDataFileFcb(fcbPtr+offset,filename,blockNo);
+
+
+    int i = initOftByFileName(OftList,currOftIndex,filename,metadata);
+    if(i == FAILURE){
+        cout << "Error : No Available OFT" << endl;
+        return FAILURE;
+    }else{
+        my_close(i);
+    }
+
     return SUCCESS;
+
 }
 
 
@@ -479,45 +518,62 @@ int my_rm(char *filename){
 }
 
 /**
- * Close File|¹Ø±ÕÒ»¸öÎÄ¼þ    my_close(OFT* oft);
+*
+*
+*/
+int my_open(char *filename){
+
+
+    int i =  initOftByFileName(OftList,currOftIndex,filename,MD_DATA_FILE);
+
+    if(i == FAILURE){
+        return FAILURE;
+    }
+    else {
+        currOftIndex = i;
+        return SUCCESS;
+    }
+
+}
+
+/**
+ * Close File
+ *　my_close(OFT* oft);
  * @param  iOft [description]
  * @return      [description]
  */
 int my_close(int iOft)
 {
-	//²é¿´OftµÄË÷ÒýºÅÊÇ·ñºÏ·¨
 	if(iOft > OFT_NUM || iOft < 0){
 		cout << "Error : No such file exist.." << endl;
 		return EXIT_FAILURE;
 	}
 	else{
-        // piOft prarent OFT index
+        // piOft  : prarent index of OFT
 		int piOft = findPdfOft(OftList,iOft);
 		if(piOft == OBJECT_NOT_FOUND){
 			cout << "Father Directory is not exist" <<endl;
 			return -1;
 		}
 
-		// Èç¹ûPCB·¢ÉúÁË¸Ä¶¯
-		// ´ÅÅÌ¶ÁÈ¡ ->´æÈëBuffer -> ÐÞ¸ÄBuffer -> ½«Buffer´æÈë´ÅÅÌ
+		// Save Change
+		// Parent OFT->Buffer->Change Buffer -> Parent OFT
 		if(OftList[iOft].fdt.isUpate == TRUE){
-			char buffer[FILE_BUF_SIZE];
+			// load parent directory file  to buffer
+            char buffer[FILE_BUF_SIZE];
 			do_read(&(OftList[piOft]),OftList[piOft].fcb.length,buffer);
 
-
-			//¸üÐÂPCBÄÚÈÝ
-            FCB * fcbBuf = (FCB *)(buffer + sizeof(FCB) * OftList[iOft].fdt.fdEntryNo);
-			//strncpy(fcbBuf->fileName,OftList[iOft].fcb.fileName,);
-
-            loadOft2Fcb(OftList+iOft,fcbBuf);
+			// point to child file's file directory entry in parent directory file
+            FCB * fcbPtr = (FCB *)(buffer + sizeof(FCB) * OftList[iOft].fdt.fdEntryNo);
+            loadOft2Fcb(OftList+iOft,fcbPtr);
             OftList[piOft].fdt.filePtr = OftList[iOft].fdt.fdEntryNo * sizeof(FCB);
-
-            do_write(OftList+piOft,(char *)fcbBuf,sizeof(FCB),WS_OVERWRITE);
+            do_write(OftList+piOft,(char *)fcbPtr,sizeof(FCB),WS_OVERWRITE);
 
 		}
 
 		initOft(OftList+iOft);
 		currOftIndex = piOft;
+
 		return piOft;
 	}
 }
@@ -591,8 +647,7 @@ int do_read(OFT* oftPtr,int len,char *text){
     /* file buffer : load the whole block then next...*/
 	unsigned char * fileBuf = getBlockBuffer();
 
-	// Èç¹ûÆ«ÒÆÁ¿µÄÖ¸Õë´óÓÚÅÌ¿éµÄ´óÐ¡£¬ËµÃ÷¿ªÊ¼¶ÁµÄÖ¸Õë²»ÔÚµ±Ç°ÅÌ¿é
-	// fatPtrÐèÒªÖ¸ÏòÏÂÒ»¸öÅÌ¿é
+	// offset point to another block -> turn to next block
 	while(offset >= VHD_BLOCK_SIZE){
 		offset -= VHD_BLOCK_SIZE;
 		blockNo = fatPtr->id;			//index to
@@ -648,7 +703,7 @@ int do_read(OFT* oftPtr,int len,char *text){
 	}
 
 	free(fileBuf);
-    /* Ô¤ÆÚ¶ÁµÄ³¤¶È ¼õÈ¥×îºóÃ»¶ÁµÄ³¤¶È ¾ÍÊÇÊµ¼Ê¶ÁµÄ³¤¶È */
+
 	return lenToRead - len;
 }
 
@@ -662,26 +717,26 @@ int do_write(OFT * oftPtr,char *text,int len,char wstyle){
     FAT *fatPtr = (FAT *)getBlockPtrByBlockNo(VhdPtr,blockNo);
     FAT *fat1 = (FAT *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_FAT1);
 
-    // ¸ù¾Ýwstyle½øÐÐÔ¤´¦Àí
+    // PreProcess : According to Write Style
     writePreProcess(oftPtr,wstyle);
     int offset = oftPtr->fdt.filePtr;
 
-    // PART1 : ÕÒµ½ÐèÒª¶ÁµÄÅÌ¿é
+    // PART1 : find the block system want to write
     while(offset >= VHD_BLOCK_SIZE){
-        // offset >= VHD_BLOCK_SIZE -> ¸ÃÅÌ¿é²»ÊÇ×îºóÒ»¸ö£¬Ñ°ÕÒÏÂÒ»¸öÅÌ¿é
+        // offset >= VHD_BLOCK_SIZE ->Turn to Next Block
         blockNo = fatPtr->id;
 
         if(blockNo == VHD_BLOCK_FILE_END){
-            // Èç¹û²»´æÔÚ ÔòÐèÒªÌí¼ÓÐÂµÄÅÌ¿é½øÈ¥
+            // if not exist -> create one
             blockNo = getNextVhdBlock(fat1);
-            // Ã»ÓÐ¿ÕÏÐÅÌ¿é ±¨´í
+            // no available block exist
             if(blockNo == VHD_BLOCK_FILE_END){
                 cout << "Error: Not Enough Block "<< endl;
                 return -1;
             }
             else{
-                // Ìí¼ÓÅÌ¿é ²¢ÇÒ¸üÐÂFAT±íÐÅÏ¢ (FAT1)
-                // Note Ö®ºóÒª¸üÐÂFAT2
+                // update  (FAT1)
+                // synchronize FAT2
                 fatPtr->id = blockNo;
                 fatPtr = (FAT *)getBlockPtrByBlockNo(VhdPtr,blockNo);
                 fatPtr->id = VHD_BLOCK_FILE_END;
@@ -700,35 +755,30 @@ int do_write(OFT * oftPtr,char *text,int len,char wstyle){
 
 
     while(len > lenTmp){
-        // ½«ÅÌ¿éÄÚÈÝ¶ÁÈ¡µ½BufferÖÐ
+        // load buffer,one block per time
         memcpy(buffer,blockPtr,VHD_BLOCK_SIZE);
 
-        // °ÑTextÖÐµÄÄÚÈÝÐ´µ½BufferÖÐ
-
-        for(;offset < VHD_BLOCK_SIZE;offset++){
+        while (len >lenTmp && offset < VHD_BLOCK_SIZE){
             *(buffer + offset) = *(textPtr);
-            textPtr++;
-            lenTmp++;
 
-            cout << "haha" << endl;
-            if(len >= lenTmp){
-                break;
-            }
+            offset++;
+            lenTmp++;
+            textPtr++;
         }
 
 
-        // ½«BufferÖÐµÄÄÚÈÝ±£´æµ½ÅÌ¿éÖÐ
+        // load buffer to block
         memcpy(blockPtr,buffer,VHD_BLOCK_SIZE);
 
-        // Èç¹ûoffset Ð´µ½ÅÌ¿éÄ©Î²¶øÇÒÎªÐ´Íê -> ÉêÇëÐÂµÄÅÌ¿é
-        if(offset == VHD_BLOCK_SIZE && len != lenTmp){
-                // Èç¹û¶Áµ½BlockµÄÄ©Î² ²¢ÇÒÎ´Ð´Íê
+        // if this block is full and there text not be stored
+        if(offset == VHD_BLOCK_SIZE && len > lenTmp){
+                // turn to next block and set offset = 0
                 offset = 0;
                 blockNo = fatPtr->id;
-
+                // if block not exist ,then apply new one
                 if(blockNo == VHD_BLOCK_FILE_END){
-                    blockNo = getNextVhdBlock(fat1);
 
+                    blockNo = getNextVhdBlock(fat1);
                     if(blockNo == VHD_BLOCK_FILE_END){
                         cout << "Error: No available block " << endl;
                         return EXIT_FAILURE;
@@ -736,7 +786,7 @@ int do_write(OFT * oftPtr,char *text,int len,char wstyle){
 
                     blockPtr = getBlockPtrByBlockNo(VhdPtr,blockNo);
                     fatPtr->id = blockNo;
-                    fatPtr = (FAT *)getBlockPtrByBlockNo(VhdPtr,blockNo);
+                    fatPtr = getFatPtrByBlockNo(VhdPtr,blockNo);
                     fatPtr->id = VHD_BLOCK_FILE_END;
 
                 }
@@ -748,17 +798,16 @@ int do_write(OFT * oftPtr,char *text,int len,char wstyle){
     }
 
 
-    //¸üÐÂ³¤¶ÈÐÅÏ¢ºÍÎÄ¼þÖ¸Õë
+    // if file's read/write pointer > fcb's length -> update fcb's length
     oftPtr->fdt.filePtr += len;
     if((int)oftPtr->fcb.length  < (int)oftPtr->fdt.filePtr){
         oftPtr->fcb.length = oftPtr->fdt.filePtr;
     }
 
     free(buffer);
-    // ÊÍ·ÅÖ®ºó¶àÓàµÄÅÌ¿é
+    // Release After Update file
     releaseBlock(blockNo);
-
-    // Í¬²½FAT2
+    // Synchronize FAT2
     initFAT2(VhdPtr);
 
     return len;
@@ -817,28 +866,117 @@ void writePreProcess(OFT*  oftPtr,char wstyle){
 unsigned char * getBlockBuffer(){
     unsigned char *buffer = (unsigned char *)malloc(VHD_BLOCK_SIZE*sizeof(unsigned char));
     if(buffer == NULL){
-        cout << "¶¯Ì¬·ÖÅä¿Õ¼äÊ§°Ü" << endl;
+        cout << "FAILURE: malloc for buffer" << endl;
         exit(EXIT_FAILURE);
     }
+
     return buffer;
 }
 
 
 void releaseBlock(int blockNo){
-
+    cout << "todo: release block .." << endl;
     FAT * fat1 = (FAT *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_FAT1);
 
     int i;
     int next;
 
-    while(fat1[i].id != VHD_BLOCK_FILE_END){
+    cout << "todo : release blcok while" << endl;
+
+    while(fat1[i].id != VHD_BLOCK_FILE_END && fat1[i].id != VHD_BLOCK_FREE){
+
         next = fat1[i].id;
         fat1[i].id = VHD_BLOCK_FREE;
         i = next;
+
     }
 
+    cout << "todo : end of file" << endl;
     fat1[blockNo].id = VHD_BLOCK_FILE_END;
 }
+
+
+
+int initOftByFileName(OFT *OftList,int piOft,char * filename,unsigned char metadata){
+
+
+    char *fname = strtok(filename,".");
+    char *ename = strtok(NULL,".");
+    OFT * pOftPtr = OftList + piOft;
+
+    cout << "File Name "<<filename << endl;
+    cout << "fame" << fname << endl;
+    cout << "ename" << ename << endl;
+
+    char buffer[FILE_BUF_SIZE];
+    do_read(pOftPtr,pOftPtr->fcb.length,buffer);
+
+    // Find FCB Index In Directory File
+    int indexOfFcb = getIndexOfFcb(pOftPtr,fname,ename,metadata);
+    if(indexOfFcb == OBJECT_NOT_FOUND){
+        cout << "No Such File Exist " << endl;
+        return FAILURE;
+    }
+    FCB * fcbPtr = (FCB *)buffer + indexOfFcb;
+
+     // Apply for new OFT
+    int indexOfOft = getNextOft(OftList);
+    if(indexOfOft == OBJECT_NOT_FOUND){
+        cout << "User Open File is Full" << endl;
+        return FAILURE;
+    }
+    OFT * cOftPtr = OftList + indexOfOft;
+
+
+    initOft(cOftPtr);
+    loadFcb2Oft(cOftPtr,fcbPtr);
+
+
+    if(pOftPtr != NULL){
+        cOftPtr->fdt.fdEntryNo = indexOfFcb;
+        cOftPtr->fdt.pdfBlockNo = pOftPtr->fcb.blockNo;
+        if(fcbPtr->metadata == MD_DATA_FILE){
+            strcpy(cOftPtr->fdt.dirName,(string(pOftPtr->fdt.dirName) + string(filename)).c_str());
+        }
+        else if(fcbPtr->metadata == MD_DIR_FILE){
+            strcpy(cOftPtr->fdt.dirName,(string(pOftPtr->fdt.dirName) + string(filename) + string("\\")).c_str());
+        }
+    }
+
+    return indexOfOft;
+}
+
+
+
+int getIndexOfFcb(OFT *oftPtr,char * fname,char *ename,unsigned char metadata){
+
+    int i;
+    //int fcbNum = int(oftPtr->fcb.length/sizeof(FCB));
+    int fcbNum = int(VHD_BLOCK_SIZE/sizeof(FCB));
+    char buffer[FILE_BUF_SIZE];
+
+    oftPtr->fdt.filePtr = 0;
+    // cout <<"before read : "<<buffer<<endl;
+    //do_read(oftPtr,oftPtr->fcb.length,buffer);
+    do_read(oftPtr,VHD_BLOCK_SIZE,buffer);
+    
+    //cout <<"after read: "<<buffer << endl;
+    FCB * fcbPtr = (FCB *)buffer;
+
+
+    for(i = 0; i < fcbNum; i++,fcbPtr++){
+
+        if (fcbPtr->metadata == metadata &&
+            strcmp(fcbPtr->fileName,fname)==0 &&
+            strcmp(fcbPtr->fileNameExten,ename)==0){
+
+            return i;
+        }
+    }
+
+    return OBJECT_NOT_FOUND;
+}
+
 
 
 /**
@@ -847,6 +985,7 @@ void releaseBlock(int blockNo){
 void readVhdFile(unsigned char * VhdPtr){
 	FILE * sysFile;
 
+    VhdPtr = (unsigned char *)malloc
 	sysFile = fopen(FileSysName,"r");
 	if(sysFile != NULL){
 		// Write VhdBuffer from sysFile
@@ -920,7 +1059,7 @@ void excuteCmd(char *cmdLine){
         case 4:
             //create
             if(arg2 != NULL){
-                my_create(arg2);
+                my_create(arg2,MD_DATA_FILE);
             }
             break;
         case 5:
@@ -932,7 +1071,7 @@ void excuteCmd(char *cmdLine){
         case 6:
             // open
             if(arg2 != NULL){
-                my_create(arg2);
+                my_open(arg2);
             }
             break;
         case 7:
@@ -941,7 +1080,7 @@ void excuteCmd(char *cmdLine){
                 my_close(currOftIndex);
             }
             else{
-                cout <<  "ÇëÏÈ´ò¿ªÎÄ¼þ£¬È»ºóÔÚ½øÐÐÎÄ¼þ²Ù×÷" << endl;
+                cout <<  "Current file is directory ,could not be close" << endl;
             }
             break;
         case 8:
@@ -950,7 +1089,7 @@ void excuteCmd(char *cmdLine){
                 my_write(currOftIndex);
             }
             else{
-                cout <<  "ÇëÏÈ´ò¿ªÎÄ¼þ£¬È»ºóÔÚ½øÐÐÎÄ¼þ²Ù×÷" << endl;
+                cout <<  "Current file is directory ,could not be write" << endl;
             }
             break;
         case 9:
@@ -959,13 +1098,13 @@ void excuteCmd(char *cmdLine){
                 my_read(currOftIndex);
             }
             else{
-                cout <<  "ÇëÏÈ´ò¿ªÎÄ¼þ£¬È»ºóÔÚ½øÐÐÎÄ¼þ²Ù×÷" << endl;
+                cout <<  "Current file is directory ,could not be read" << endl;
             }
             break;
         case 10:
             // exit
             my_exit_sys();
-            cout << "ÍË³öÎÄ¼þÏµÍ³ " <<endl;
+            cout << "Exist File System " <<endl;
             exit(EXIT_SUCCESS);
             break;
         case 11:
@@ -976,7 +1115,7 @@ void excuteCmd(char *cmdLine){
             cout << "BigFile -TODO"<<endl;
             break;
         default:
-            cout << "´ËÃüÁîÎÞÐ§"<< endl;
+            cout << "No such Command"<< endl;
     }
 
 }

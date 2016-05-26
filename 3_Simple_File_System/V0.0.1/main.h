@@ -52,6 +52,13 @@ unsigned char * getBlockBuffer();
 
 void releaseBlock(int blockNo);
 
+int initOftByFileName(OFT *OftList,int piOft,char * filename,unsigned char metadata);
+
+int getIndexOfFcb(OFT *oftPtr,char * fname,char *ename,unsigned char metadata);
+
+
+
+
 
 void excuteCmd(char *cmdLine);
 

@@ -646,6 +646,8 @@ int my_open(char *filename){
     openfilelist[fd].free = 1;
     openfilelist[fd].topenfile = 1;
     openfilelist[fd].fcbstate = 0;
+
+    
     currfd = fd;
     return 1;
 }

@@ -91,3 +91,59 @@ void printDirFile(FCB *fcbPtr){
                        (fcbPtr->createTime)&0x001f * 2);
 }
 
+
+int initDirectoryFile(unsigned char *VhdPtr,int blockNo,int parentBlockNo){
+
+    int fcbNum = int(VHD_BLOCK_SIZE / sizeof(FCB));
+    //void initFcb(FCB * fcbPtr,char *fname,char *ename,unsigned char metadata)
+    FCB *fcbPtr = (FCB *)getBlockPtrByBlockNo(VhdPtr,blockNo);
+    FCB *fcbPtrParent = (FCB *)getBlockPtrByBlockNo(VhdPtr,parentBlockNo);
+
+    // Special File Directory Entry "."
+    initFcb(fcbPtr,".","di",MD_DIR_FILE);
+    fcbPtr->blockNo = blockNo;
+    fcbPtr->length = 2 * sizeof(FCB);
+
+    // Special File Directory Entry ".."
+    fcbPtr++;
+    initFcb(fcbPtr,"..","di",MD_DIR_FILE);
+    fcbPtr->blockNo = parentBlockNo;
+    //fcbPtr->length not ...
+
+    return SUCCESS;
+    /*
+    for(int i = 2; i < fcbNum; i++,fcbPtr++){
+        initFcb(fcbPtr);
+    }
+    */
+
+}
+/* Find a available directory */
+int getNextFcb(FCB *fcbPtr){
+
+    int fcbNum = int(VHD_BLOCK_SIZE/sizeof(FCB));
+
+    for(int i = 2;i < fcbNum; i++,fcbPtr++){
+        if(fcbPtr->isUse == FALSE){
+            return i;
+        }
+    }
+
+    return OBJECT_NOT_FOUND;
+}
+
+int initDataFileFcb(FCB *fcbPtr,char * fileName,int blockNo){
+
+    char * fname = strtok(fileName,".");
+    char * ename = strtok(NULL,".");
+
+    if(!ename){
+        cout << "Data File : file name extension could not be null " << endl;
+        return FAILURE;
+    }
+
+    initFcb(fcbPtr,fname,ename,MD_DATA_FILE);
+    fcbPtr->blockNo = blockNo;
+
+    return TRUE;
+}

@@ -67,7 +67,7 @@ BootBlock * initBootBlock(unsigned char *VhdPtr){
 
 	char * sysInfoStr = "文件系统,外存分配方式:FAT12,\n磁盘空间管理:结合于FAT的位示图,\n目录结构:单用户多级目录结构.";
 	//get Boot Block
-	unsigned char * bootBlockPtr = getBlockPtrByBlockNo(VhdPtr,BLOCK_NUM_ROOT_DIR);
+	unsigned char * bootBlockPtr = getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_BOOT_BLOCK);
 	BootBlock * bootBlock = (BootBlock *)bootBlockPtr;
 
 	//assign the value of Boot Block
@@ -114,6 +114,8 @@ FAT * initFAT1(unsigned char *VhdPtr){
 		fat1[i].id = VHD_BLOCK_FREE;
 	}
 
+	fat1[BLOCK_INDEX_ROOT_DIR].id = VHD_BLOCK_FILE_END;
+
 	return fat1;
 }
 
@@ -126,7 +128,7 @@ FAT * initFAT1(unsigned char *VhdPtr){
 void initFAT2(unsigned char *VhdPtr){
 	FAT * fat1 = (FAT *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_FAT1);
 	FAT * fat2 = (FAT *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_FAT2);
-	memcpy(fat2,fat1,VHD_BLOCK_SIZE);
+	memcpy(fat2,fat1,VHD_BLOCK_SIZE *2);
 }
 
 /**
@@ -144,36 +146,12 @@ void initFAT2(unsigned char *VhdPtr){
  * @return        [description]
  */
  void initRootDirBlock(unsigned char *VhdPtr){
-	FCB * rootPtr =(FCB *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_ROOT_DIR);
+	//FCB * rootPtr = (FCB *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_ROOT_DIR);
 
-    FAT * fat1 = (FAT *)getFatPtrByBlockNo(VhdPtr,BLOCK_INDEX_ROOT_DIR);
-    fat1[BLOCK_INDEX_BOOT_BLOCK].id = VHD_BLOCK_FILE_END;
+    initDirectoryFile(VhdPtr,BLOCK_INDEX_ROOT_DIR,BLOCK_INDEX_ROOT_DIR);
 
-	int fcbNum = (VHD_BLOCK_SIZE * BLOCK_NUM_ROOT_DIR)/sizeof(FCB);
-
-	//Part 1 ：初始化 "." 目录项
-	FCB * fcbDot = rootPtr;
-	initFcb(fcbDot);
-	strcpy(fcbDot->fileName,".");
-	strcpy(fcbDot->fileNameExten,"dir");
-	fcbDot->metadata = MD_DIR_FILE;
-	fcbDot->length =  2 * sizeof(FCB);		//NOTE: 开始的时候就俩 FCB"." 和 ".." 所以这里是 2 * sizeof(FCB)
-	fcbDot->isUse = TRUE;
-	setFcbTime(fcbDot);
-
-
-	// Part 2:  初始化 ".." 目录项
-	FCB * fcbDotDot = fcbDot + 1;
-	memcpy(fcbDotDot,fcbDot,sizeof(FCB));  	// 2.1 Copy fcbDot to fcbDotDot
-	strcpy(fcbDotDot->fileName,"..");		// 2.2 Change the name of fcbDotDot
-
-	//Part 3：ELSE 空白PCB
-	FCB * fcbPtr = fcbDotDot;
-	for(int i = 2;i<fcbNum;i++){
-		fcbPtr++;
-		initFcb(fcbPtr);
-	}
 }
+
 
 /**
  * 初始化根目录的OFT
@@ -184,21 +162,20 @@ void initFAT2(unsigned char *VhdPtr){
 OFT * initRootDirOft(unsigned char* VhdPtr,OFT * OftList){
 
 	//OftList[0] use to Store Root FCB
-	OFT * rootOftPtr = OftList;
+	OFT * oftPtr = OftList;
 
-	FCB * rootFcbPtr =(FCB *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_ROOT_DIR);
+	FCB * fcbPtr =(FCB *)getBlockPtrByBlockNo(VhdPtr,BLOCK_INDEX_ROOT_DIR);
 
-	initOft(rootOftPtr);
+	initOft(oftPtr);
+	loadFcb2Oft(oftPtr,fcbPtr);
+    strcpy(oftPtr->fdt.dirName,"\\root\\");
 
-	loadFcb2Oft(rootOftPtr,rootFcbPtr);
+	oftPtr->fdt.pdfBlockNo = BLOCK_INDEX_ROOT_DIR;  //5
+	oftPtr->fdt.fdEntryNo = 0;					    //Root Dir 的父目录文件就是自己 目录项为首个FCB .
 
-	rootOftPtr->isUse = TRUE;
-	rootOftPtr->fdt.pdfBlockNo = BLOCK_INDEX_ROOT_DIR;  //5
-	rootOftPtr->fdt.fdEntryNo = 0;					    //Root Dir 的父目录文件就是自己 目录项为首个FCB .
-
-	strcpy(rootOftPtr->fdt.dirName,"\\root\\");
-
-	return rootOftPtr;
+	return oftPtr;
 }
+
+
 
 

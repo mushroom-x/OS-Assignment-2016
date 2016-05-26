@@ -1,0 +1,18 @@
+# depslib dependency file v1.0
+1464189006 source:c:\projects\os-assignment-2016\3_simple_file_system\filesystemxsk\main.cpp
+	"Common.h"
+	"SysStructure.h"
+
+1464183262 c:\projects\os-assignment-2016\3_simple_file_system\filesystemxsk\common.h
+	<iostream>
+	<fstream>
+	<stdlib.h>
+	<string.h>
+	<time.h>
+
+1464186107 c:\projects\os-assignment-2016\3_simple_file_system\filesystemxsk\sysstructure.h
+	"Common.h"
+
+1464189350 source:c:\projects\os-assignment-2016\3_simple_file_system\filesystemxsk\sysstructure.cpp
+	"SysStructure.h"
+
